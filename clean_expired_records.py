@@ -24,12 +24,14 @@ def expired_record_cleaning_loop(flask_app, logger):
         while True:
             try:
                 with metrics.records_cleaning_time.time():
+                    # TODO: (audit-log) update/delete historical_system_profiles/db_interface.py#clean_expired_records
                     deleted_count = db_interface.clean_expired_records(
                         config.valid_profile_age_days
                     )
                 logger.info("deleted %s expired records" % deleted_count)
                 metrics.records_cleaned.inc(deleted_count)
             except Exception:
+                # TODO: (audit-log) failure
                 logger.exception(
                     "An error occurred during expired record cleaning loop"
                 )

@@ -64,6 +64,7 @@ def _archive_profile(data, ptc, logger):
     # question.  This works for our purposes since users differentiate between
     # profiles in the app via captured_date.
 
+    # TODO: (audit-log) read historical_system_profiles/db_interface.py#is_profile_recorded
     if captured_date and db_interface.is_profile_recorded(
         captured_date, host["id"], account
     ):
@@ -73,6 +74,7 @@ def _archive_profile(data, ptc, logger):
         )
         _record_duplicate_message(host, request_id, ptc)
     else:
+        # TODO: (audit-log) create historical_system_profiles/db_interface.py#create_profile
         hsp = db_interface.create_profile(
             inventory_id=host["id"], profile=profile, account_number=host["account"],
         )

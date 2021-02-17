@@ -31,10 +31,12 @@ def _get_current_names_for_profiles(hsps):
     auth_key = get_key_from_headers(request.headers)
 
     try:
+        # TODO: (audit-log) read kerlescan/inventory_service_interface.py#fetch_systems_with_profiles
         systems = fetch_systems_with_profiles(
             inventory_ids, auth_key, current_app.logger, _get_event_counters(),
         )
     except RBACDenied as error:
+        # TODO: (audit-log) failure
         raise HTTPError(HTTPStatus.FORBIDDEN, message=error.message)
     display_names = {system["id"]: system["display_name"] for system in systems}
     enriched_hsps = []
@@ -76,6 +78,7 @@ def _check_for_missing_ids(requested_ids, result):
     if len(result) < len(requested_ids):
         returned_ids = {str(item.id) for item in result}
         missing_ids = set(requested_ids) - returned_ids
+        # TODO: (audit-log) failure
         raise HTTPError(
             HTTPStatus.NOT_FOUND,
             message="ids [%s] not available to display" % ", ".join(missing_ids),
@@ -94,6 +97,7 @@ def _check_for_duplicates(requested_ids):
             duplicate_ids.append(item)
 
     if duplicate_ids:
+        # TODO: (audit-log) failure
         raise HTTPError(
             HTTPStatus.BAD_REQUEST,
             message="duplicate IDs requested: %s" % duplicate_ids,
@@ -108,6 +112,7 @@ def get_hsps_by_ids(profile_ids):
     _check_for_duplicates(profile_ids)
 
     account_number = view_helpers.get_account_number(request)
+    # TODO: (audit-log) read historical_system_profiles/db_interface.py#get_hsps_by_profile_ids
     result = db_interface.get_hsps_by_profile_ids(profile_ids, account_number)
 
     # TODO: rely on captured_date and filter in SQL above
@@ -126,12 +131,14 @@ def get_hsps_by_inventory_id(inventory_id, limit, offset):
     """
     validate_uuids([inventory_id])
     account_number = view_helpers.get_account_number(request)
+    # TODO: (audit-log) read historical_system_profiles/db_interface.py#get_hsps_by_inventory_id
     query_results = db_interface.get_hsps_by_inventory_id(
         inventory_id, account_number, limit, offset
     )
     valid_profiles = _filter_old_hsps(query_results)
 
     if not valid_profiles:
+        # TODO: (audit-log) failure
         raise HTTPError(
             HTTPStatus.NOT_FOUND,
             message="no historical profiles found for inventory_id %s" % inventory_id,

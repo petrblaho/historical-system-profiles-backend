@@ -13,6 +13,7 @@ def _delete_profiles(data, ptc, logger):
     account = data.value["account"]
 
     _record_recv_message(request_id, inventory_id, account, ptc)
+    # TODO: (audit-log) delete historical_system_profiles/db_interface.py#delete_hsps_by_inventory_id
     db_interface.delete_hsps_by_inventory_id(inventory_id)
     logger.info("deleted profiles for inventory_id %s" % inventory_id)
     _record_success_message(request_id, inventory_id, account, ptc)
@@ -47,6 +48,7 @@ def _emit_delete_error(data, ptc):
     inventory_id = data.value["id"]
     request_id = data.value["request_id"]
     account = data.value["account"]
+    # TODO: (audit-log) failure
     ptc.emit_error_message(
         "error when deleting profiles for inventory record",
         request_id=request_id,
@@ -62,7 +64,9 @@ def event_loop(flask_app, consumer, ptc, logger, delay_seconds):
             for data in consumer:
                 try:
                     if data.value["type"] == "delete":
+                        # TODO: (audit-log) delete historical_system_profiles/deleter.py#_delete_profiles
                         _delete_profiles(data, ptc, logger)
                 except Exception:
+                    # TODO: (audit-log) failure
                     _emit_delete_error(data, ptc)
                     logger.exception("An error occurred during message processing")

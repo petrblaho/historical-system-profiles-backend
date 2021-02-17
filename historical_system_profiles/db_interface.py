@@ -15,6 +15,7 @@ def rollback_on_exception(func):
             retval = func(*args, **kwargs)
             return retval
         except SQLAlchemyError:
+            # TODO: (audit-log) failure
             db.session.rollback()
             raise
 
@@ -27,6 +28,7 @@ def create_profile(inventory_id, profile, account_number):
         account=account_number, inventory_id=inventory_id, system_profile=profile,
     )
     db.session.add(profile)
+    # TODO: (audit-log) create
     db.session.commit()
     return profile
 
@@ -39,6 +41,7 @@ def get_hsps_by_inventory_id(inventory_id, account_number, limit, offset):
 
     query = query.order_by(HistoricalSystemProfile.captured_on.desc())
     query = query.limit(limit).offset(offset)
+    # TODO: (audit-log) read
     query_results = query.all()
 
     return query_results
@@ -58,6 +61,7 @@ def is_profile_recorded(captured_date, inventory_id, account_number):
         HistoricalSystemProfile.captured_on == captured_date,
     )
 
+    # TODO: (audit-log) read
     if query.first():
         return True
     return False
@@ -69,6 +73,7 @@ def delete_hsps_by_inventory_id(inventory_id):
         HistoricalSystemProfile.inventory_id == inventory_id,
     )
     query.delete(synchronize_session="fetch")
+    # TODO: (audit-log) delete
     db.session.commit()
 
 
@@ -78,6 +83,7 @@ def get_hsps_by_profile_ids(profile_ids, account_number):
         HistoricalSystemProfile.id.in_(profile_ids),
     )
 
+    # TODO: (audit-log) read
     query_results = query.all()
 
     return query_results
@@ -92,5 +98,6 @@ def clean_expired_records(days_til_expired):
         HistoricalSystemProfile.created_on < expired_time
     )
     count = query.delete(synchronize_session="fetch")
+    # TODO: (audit-log) update/delete
     db.session.commit()
     return count
