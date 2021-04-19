@@ -42,6 +42,9 @@ def _archive_profile(data, ptc, logger):
     """
     given an event, archive a profile and emit a success message
     """
+
+    service_auth_key = data.value.get("platform_metadata", {}).get("b64_identity", None)
+
     if data.value["type"] not in ("created", "updated"):
         logger.info("skipping message that is not created or updated type")
         return
@@ -88,7 +91,7 @@ def _archive_profile(data, ptc, logger):
         # After the new hsp is saved, we need to check for any reason to alert via
         # triggering a notification, i.e. if drift from any associated baselines has
         # occurred.
-        _check_and_send_notifications(host["id"], "service_auth_key", logger)
+        _check_and_send_notifications(host["id"], service_auth_key, logger)
 
 
 def _check_and_send_notifications(inventory_id, service_auth_key, logger):
