@@ -14,6 +14,7 @@ def _delete_profiles(data, ptc, logger):
 
     _record_recv_message(request_id, inventory_id, account, ptc)
     db_interface.delete_hsps_by_inventory_id(inventory_id)
+    # TODO: DRFT-310 - delete system_id from baseline svc here
     logger.info("deleted profiles for inventory_id %s" % inventory_id)
     _record_success_message(request_id, inventory_id, account, ptc)
 
@@ -64,6 +65,7 @@ def event_loop(flask_app, consumer, ptc, logger, delay_seconds):
                     logger.debug(("kafka message recieved: '%s'", str(data)))
                     if data.value["type"] == "delete":
                         _delete_profiles(data, ptc, logger)
+                        # TODO: DRFT-310 - delete system_id from baseline svc or here
                 except Exception:
                     _emit_delete_error(data, ptc)
                     logger.exception("An error occurred during message processing")

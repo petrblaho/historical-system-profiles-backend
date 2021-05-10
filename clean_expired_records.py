@@ -24,6 +24,7 @@ def expired_record_cleaning_loop(flask_app, logger):
         while True:
             try:
                 with metrics.records_cleaning_time.time():
+                    # TODO: DRFT-310 - use returned system_ids and delete them from baseline svc
                     deleted_count = db_interface.clean_expired_records(
                         config.valid_profile_age_days
                     )

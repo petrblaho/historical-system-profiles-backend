@@ -116,4 +116,5 @@ def clean_expired_records(days_til_expired):
     message = "cleaned expired historical system profiles"
     current_app.logger.audit(message, request=request, success=True)
 
+    # TODO: DRFT-310 - return system_ids of deleted
     return count
