@@ -4,7 +4,7 @@ from collections import Counter
 from http import HTTPStatus
 
 from dateutil.relativedelta import relativedelta
-from flask import Blueprint, current_app, request
+from flask import Blueprint, current_app, g, request
 from kerlescan import view_helpers
 from kerlescan.exceptions import HTTPError, RBACDenied
 from kerlescan.inventory_service_interface import fetch_systems_with_profiles
@@ -205,6 +205,7 @@ def ensure_rbac_hsps_read():
         logger=current_app.logger,
         request_metric=metrics.rbac_requests,
         exception_metric=metrics.rbac_exceptions,
+        rbac_filters=g.get("rbac_filters", {}),
     )
 
 
