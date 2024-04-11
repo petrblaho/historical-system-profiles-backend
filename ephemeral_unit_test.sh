@@ -10,7 +10,7 @@ echo '===================================='
 #Start Python venv
 python3.8 -m venv venv
 source venv/bin/activate
-pip install --upgrade pip setuptools poetry
+pip install --upgrade pip setuptools
 pip install pre-commit
 set +e
 pre-commit run --all-files
@@ -22,6 +22,8 @@ if [ $TEST_RESULT -ne 0 ]; then
 	echo '====================================='
 	exit 1
 fi
+
+pip install --force-reinstall poetry~=1.8.2
 
 # Move back out of the pre-commit virtual env
 source .bonfire_venv/bin/activate
