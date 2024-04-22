@@ -11,11 +11,7 @@ if [[ -z "$QUAY_USER" || -z "$QUAY_TOKEN" ]]; then
     exit 1
 fi
 
-if [[ "$GIT_BRANCH" == "origin/security-compliance" ]]; then
-    PUSH_TAG="${SECURITY_COMPLIANCE_TAG}"
-else
-    PUSH_TAG=("latest" "qa")
-fi
+PUSH_TAG=("latest" "qa")
 
 # Create tmp dir to store data in during job run (do NOT store in $WORKSPACE)
 export TMP_JOB_DIR=$(mktemp -d -p "$HOME" -t "jenkins-${JOB_NAME}-${BUILD_NUMBER}-XXXXXX")
@@ -35,12 +31,17 @@ if test -f /etc/redhat-release && grep -q -i "release 7" /etc/redhat-release; th
     docker --config="$DOCKER_CONF" login -u="$QUAY_USER" -p="$QUAY_TOKEN" quay.io
     docker --config="$DOCKER_CONF" login -u="$RH_REGISTRY_USER" -p="$RH_REGISTRY_TOKEN" registry.redhat.io
     docker --config="$DOCKER_CONF" build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
-    docker --config="$DOCKER_CONF" push "${IMAGE_NAME}:${IMAGE_TAG}"
 
-    for TAG in "${PUSH_TAG[@]}"; do
-        docker --config="$DOCKER_CONF" tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:$TAG"
-        docker --config="$DOCKER_CONF" push "${IMAGE_NAME}:$TAG"
-    done
+    if [[ "$GIT_BRANCH" == "origin/security-compliance" ]]; then
+        docker --config="$DOCKER_CONF" tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:${SECURITY_COMPLIANCE_TAG}"
+        docker --config="$DOCKER_CONF" push "${IMAGE_NAME}:${SECURITY_COMPLIANCE_TAG}"
+    else
+        docker --config="$DOCKER_CONF" push "${IMAGE_NAME}:${IMAGE_TAG}"
+        for TAG in "${PUSH_TAG[@]}"; do
+            docker --config="$DOCKER_CONF" tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:${TAG}"
+            docker --config="$DOCKER_CONF" push "${IMAGE_NAME}:${TAG}"
+        done
+    fi
 
 else
     # on RHEL8 or anything else, use podman
@@ -50,10 +51,15 @@ else
     podman login -u="$QUAY_USER" -p="$QUAY_TOKEN" quay.io
     podman login -u="$RH_REGISTRY_USER" -p="$RH_REGISTRY_TOKEN" registry.redhat.io
     podman build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
-    podman push "${IMAGE_NAME}:${IMAGE_TAG}"
 
-    for TAG in "${PUSH_TAG[@]}"; do
-        podman tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:$TAG"
-        podman push "${IMAGE_NAME}:$TAG"
-    done
+    if [[ "$GIT_BRANCH" == "origin/security-compliance" ]]; then
+        podman tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:${SECURITY_COMPLIANCE_TAG}"
+        podman push "${IMAGE_NAME}:${SECURITY_COMPLIANCE_TAG}"
+    else
+        podman push "${IMAGE_NAME}:${IMAGE_TAG}"
+        for TAG in "${PUSH_TAG[@]}"; do
+            podman tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:${TAG}"
+            podman push "${IMAGE_NAME}:${TAG}"
+        done
+    fi
 fi
